@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentence Builder</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #e0f2fe, #ede9fe);
+    color: #26334a;
+}
+
+.container {
+    width: 100%;
+    max-width: 650px;
+    padding: 35px;
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 15px 45px #33415520;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2rem;
+    color: #5145a8;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #778196;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.stat {
+    flex: 1;
+    padding: 12px;
+    background: #f3f1ff;
+    border-radius: 12px;
+}
+
+.stat strong {
+    display: block;
+    color: #5145a8;
+    font-size: 1.3rem;
+}
+
+.stat span {
+    font-size: 0.8rem;
+    color: #7b8297;
+}
+
+.level {
+    display: inline-block;
+    background: #e8e5ff;
+    color: #5145a8;
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+.instruction {
+    font-size: 0.95rem;
+    color: #657087;
+    margin-bottom: 15px;
+}
+
+.answer-area {
+    min-height: 100px;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 10px;
+    background: #f8f9ff;
+    border: 2px dashed #c8c3ed;
+    border-radius: 15px;
+    margin-bottom: 25px;
+}
+
+.answer-placeholder {
+    color: #a0a6b7;
+    font-size: 0.9rem;
+}
+
+.word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    min-height: 55px;
+}
+
+.word {
+    padding: 12px 18px;
+    border: 1px solid #d9d5f5;
+    border-radius: 12px;
+    background: #eeecff;
+    color: #493e94;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.word:hover {
+    background: #dcd6ff;
+    transform: translateY(-3px);
+}
+
+.word.selected {
+    background: #5145a8;
+    color: white;
+    border-color: #5145a8;
+}
+
+.word:disabled {
+    opacity: 0.35;
+    cursor: default;
+    transform: none;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+button.action {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button.action:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+#checkButton {
+    background: #5145a8;
+    color: white;
+}
+
+#clearButton {
+    background: #e9eaf2;
+    color: #4c5366;
+}
+
+#nextButton {
+    background: #159b76;
+    color: white;
+    display: none;
+}
+
+.feedback {
+    min-height: 30px;
+    margin-top: 22px;
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+
+.feedback.correct {
+    color: #159b76;
+}
+
+.feedback.incorrect {
+    color: #e05c65;
+}
+
+.progress-container {
+    margin-top: 25px;
+    text-align: left;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #778196;
+    margin-bottom: 8px;
+}
+
+.progress-track {
+    height: 9px;
+    background: #eeedf5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #8274e8, #5145a8);
+    border-radius: 10px;
+    transition: width 0.3s;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 25px 18px;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+    }
+
+    .word {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .stat {
+        padding: 10px 5px;
+    }
+}
+</style>
+</head>
+<body>
+
+<main class="container">
+    <h1>Sentence Builder</h1>
+    <p class="subtitle">Put the words in the right order and build a perfect sentence!</p>
+
+    <div class="stats">
+        <div class="stat">
+            <strong id="score">0</strong>
+            <span>Score</span>
+        </div>
+        <div class="stat">
+            <strong id="questionNumber">1</strong>
+            <span>Question</span>
+        </div>
+        <div class="stat">
+            <strong id="streak">0</strong>
+            <span>Streak</span>
+        </div>
+    </div>
+
+    <div class="level" id="level">Level 1 · Beginner</div>
+
+    <p class="instruction">Click the words below in the correct order:</p>
+
+    <div class="answer-area" id="answerArea">
+        <span class="answer-placeholder">Your sentence will appear here...</span>
+    </div>
+
+    <div class="word-bank" id="wordBank"></div>
+
+    <div class="buttons">
+        <button class="action" id="checkButton">✓ Check Answer</button>
+        <button class="action" id="clearButton">↺ Clear</button>
+        <button class="action" id="nextButton">Next Sentence →</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="progress-container">
+        <div class="progress-label">
+            <span>Learning progress</span>
+            <span id="progressText">0 / 10</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+const questions = [
+    {
+        words: ["the", "sun", "rises", "in", "the", "east"],
+        answer: "the sun rises in the east",
+        level: "Beginner"
+    },
+    {
+        words: ["I", "love", "reading", "books"],
+        answer: "I love reading books",
+        level: "Beginner"
+    },
+    {
+        words: ["she", "is", "playing", "with", "her", "friends"],
+        answer: "she is playing with her friends",
+        level: "Beginner"
+    },
+    {
+        words: ["the", "children", "are", "playing", "outside"],
+        answer: "the children are playing outside",
+        level: "Beginner"
+    },
+    {
+        words: ["we", "should", "always", "respect", "others"],
+        answer: "we should always respect others",
+        level: "Intermediate"
+    },
+    {
+        words: ["science", "helps", "us", "understand", "the", "world"],
+        answer: "science helps us understand the world",
+        level: "Intermediate"
+    },
+    {
+        words: ["although", "it", "was", "raining", "we", "went", "outside"],
+        answer: "although it was raining we went outside",
+        level: "Intermediate"
+    },
+    {
+        words: ["the", "scientist", "carefully", "examined", "the", "results"],
+        answer: "the scientist carefully examined the results",
+        level: "Intermediate"
+    },
+    {
+        words: ["technology", "has", "changed", "the", "way", "we", "communicate"],
+        answer: "technology has changed the way we communicate",
+        level: "Advanced"
+    },
+    {
+        words: ["if", "we", "work", "together", "we", "can", "achieve", "great", "things"],
+        answer: "if we work together we can achieve great things",
+        level: "Advanced"
+    }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let streak = 0;
+let selectedWords = [];
+let completed = false;
+let shuffledWords = [];
+
+const answerArea = document.getElementById("answerArea");
+const wordBank = document.getElementById("wordBank");
+const feedback = document.getElementById("feedback");
+const checkButton = document.getElementById("checkButton");
+const clearButton = document.getElementById("clearButton");
+const nextButton = document.getElementById("nextButton");
+
+function shuffle(array) {
+    const result = [...array];
+
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+
+    return result;
+}
+
+function loadQuestion() {
+    completed = false;
+    selectedWords = [];
+    feedback.textContent = "";
+    feedback.className = "feedback";
+
+    const question = questions[currentQuestion];
+    shuffledWords = shuffle(question.words.map((word, index) => ({
+        id: index,
+        text: word
+    })));
+
+    document.getElementById("questionNumber").textContent = currentQuestion + 1;
+    document.getElementById("level").textContent =
+        `Level ${currentQuestion < 4 ? 1 : currentQuestion < 8 ? 2 : 3} · ${question.level}`;
+
+    checkButton.style.display = "inline-block";
+    clearButton.style.display = "inline-block";
+    nextButton.style.display = "none";
+
+    renderWords();
+    renderAnswer();
+    updateProgress();
+}
+
+function renderWords() {
+    wordBank.innerHTML = "";
+
+    shuffledWords.forEach(word => {
+        const button = document.createElement("button");
+        button.className = "word";
+        button.textContent = word.text;
+        button.disabled = selectedWords.some(item => item.id === word.id);
+
+        if (button.disabled) {
+            button.classList.add("selected");
+        }
+
+        button.addEventListener("click", () => selectWord(word));
+        wordBank.appendChild(button);
+    });
+}
+
+function renderAnswer() {
+    answerArea.innerHTML = "";
+
+    if (selectedWords.length === 0) {
+        const placeholder = document.createElement("span");
+        placeholder.className = "answer-placeholder";
+        placeholder.textContent = "Your sentence will appear here...";
+        answerArea.appendChild(placeholder);
+        return;
+    }
+
+    selectedWords.forEach((word, index) => {
+        const button = document.createElement("button");
+        button.className = "word selected";
+        button.textContent = word.text;
+        button.title = "Click to remove this word";
+        button.addEventListener("click", () => removeWord(index));
+        answerArea.appendChild(button);
+    });
+}
+
+function selectWord(word) {
+    if (completed) return;
+
+    selectedWords.push(word);
+    renderWords();
+    renderAnswer();
+}
+
+function removeWord(index) {
+    if (completed) return;
+
+    selectedWords.splice(index, 1);
+    renderWords();
+    renderAnswer();
+}
+
+function checkAnswer() {
+    if (completed) return;
+
+    if (selectedWords.length === 0) {
+        feedback.textContent = "Choose some words first!";
+        feedback.className = "feedback incorrect";
+        return;
+    }
+
+    const userAnswer = selectedWords.map(word => word.text).join(" ").toLowerCase();
+    const correctAnswer = questions[currentQuestion].answer.toLowerCase();
+
+    if (userAnswer === correctAnswer) {
+        completed = true;
+        score += 10;
+        streak++;
+
+        document.getElementById("score").textContent = score;
+        document.getElementById("streak").textContent = streak;
+
+        feedback.textContent = "🎉 Excellent! You built the correct sentence!";
+        feedback.className = "feedback correct";
+
+        checkButton.style.display = "none";
+        clearButton.style.display = "none";
+        nextButton.style.display = "inline-block";
+
+        updateProgress();
+    } else {
+        streak = 0;
+        document.getElementById("streak").textContent = streak;
+
+        feedback.textContent = "Not quite! Try rearranging the words.";
+        feedback.className = "feedback incorrect";
+    }
+}
+
+function clearAnswer() {
+    if (completed) return;
+
+    selectedWords = [];
+    renderWords();
+    renderAnswer();
+
+    feedback.textContent = "";
+    feedback.className = "feedback";
+}
+
+function updateProgress() {
+    const progress = (currentQuestion + (completed ? 1 : 0)) / questions.length * 100;
+
+    document.getElementById("progressBar").style.width = progress + "%";
+    document.getElementById("progressText").textContent =
+        `${currentQuestion + (completed ? 1 : 0)} / ${questions.length}`;
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        loadQuestion();
+    } else {
+        showResults();
+    }
+}
+
+function showResults() {
+    document.querySelector(".container").innerHTML = `
+        <h1>🏆 Amazing Work!</h1>
+        <p class="subtitle">You completed all the sentence challenges.</p>
+        <div class="stat" style="margin: 30px 0;">
+            <strong style="font-size: 2.5rem;">${score}</strong>
+            <span>Total Score</span>
+        </div>
+        <p style="margin-bottom: 25px; color: #657087;">
+            You correctly completed all 10 sentences. Keep practising to become a grammar expert!
+        </p>
+        <button class="action" id="restartButton"
+            style="background: #5145a8; color: white;">
+            ↻ Play Again
+        </button>
+    `;
+
+    document.getElementById("restartButton").addEventListener("click", restartGame);
+}
+
+function restartGame() {
+    currentQuestion = 0;
+    score = 0;
+    streak = 0;
+
+    document.querySelector(".container").innerHTML = `
+        <h1>🧩 Sentence Builder</h1>
+        <p class="subtitle">Put the words in the right order and build a perfect sentence!</p>
+        <div class="stats">
+            <div class="stat"><strong id="score">0</strong><span>Score</span></div>
+            <div class="stat"><strong id="questionNumber">1</strong><span>Question</span></div>
+            <div class="stat"><strong id="streak">0</strong><span>Streak</span></div>
+        </div>
+        <div class="level" id="level">Level 1 · Beginner</div>
+        <p class="instruction">Click the words below in the correct order:</p>
+        <div class="answer-area" id="answerArea">
+            <span class="answer-placeholder">Your sentence will appear here...</span>
+        </div>
+        <div class="word-bank" id="wordBank"></div>
+        <div class="buttons">
+            <button class="action" id="checkButton">✓ Check Answer</button>
+            <button class="action" id="clearButton">↺ Clear</button>
+            <button class="action" id="nextButton">Next Sentence →</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <div class="progress-container">
+            <div class="progress-label">
+                <span>Learning progress</span>
+                <span id="progressText">0 / 10</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    `;
+
+    bindControls();
+    loadQuestion();
+}
+
+function bindControls() {
+    checkButton = document.getElementById("checkButton");
+    clearButton = document.getElementById("clearButton");
+    nextButton = document.getElementById("nextButton");
+
+    checkButton.addEventListener("click", checkAnswer);
+    clearButton.addEventListener("click", clearAnswer);
+    nextButton.addEventListener("click", nextQuestion);
+}
+
+checkButton.addEventListener("click", checkAnswer);
+clearButton.addEventListener("click", clearAnswer);
+nextButton.addEventListener("click", nextQuestion);
+
+loadQuestion();
+</script>
+
+</body>
+</html>
